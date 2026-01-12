@@ -1,0 +1,6 @@
+langchain
+langchain-openai
+volcengine-python-sdk
+python-dotenv
+requests
+imageio-ffmpeg

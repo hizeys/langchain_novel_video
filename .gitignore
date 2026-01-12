@@ -5,10 +5,10 @@
 /app/services/__pycache__/
 /app/utils/__pycache__/
 /novel_video.log
-/character/
+/character/*.png
 /history/
-/image/
-/video/
-/voice/
+/image/*.jpeg
+/video/*.mp4
+/voice/*.wav
 post.py
 merged_video.mp4
