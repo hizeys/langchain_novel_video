@@ -8,7 +8,11 @@
 /character/*.png
 /history/
 /image/*.jpeg
+!image/sample_start.jpeg
+!image/sample_end.jpeg
 /video/*.mp4
-/voice/*.wav
+!video/sample.mp4
 post.py
 merged_video.mp4
+voice/*.wav
+!voice/sample.wav
