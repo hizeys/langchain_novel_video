@@ -7,6 +7,7 @@
 /novel_video.log
 /character/*.png
 /history/
+!history/sample.json
 /image/*.jpeg
 !image/sample_start.jpeg
 !image/sample_end.jpeg
