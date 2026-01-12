@@ -6,6 +6,7 @@
 /app/utils/__pycache__/
 /novel_video.log
 /character/*.png
+!/character/王熙凤.png
 /history/*
 !history/sample.json
 /image/*.jpeg
