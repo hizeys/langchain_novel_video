@@ -6,7 +6,7 @@
 /app/utils/__pycache__/
 /novel_video.log
 /character/*.png
-/history/
+/history/*
 !history/sample.json
 /image/*.jpeg
 !image/sample_start.jpeg
