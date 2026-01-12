@@ -1,4 +1,4 @@
-/.env*
+*.env
 /__pycache__/
 /app/__pycache__/
 /app/core/__pycache__/
