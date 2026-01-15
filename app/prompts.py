@@ -51,22 +51,27 @@ PORTAL_PROMPT = """
 # 文生图提示词生成提示词
 IMAGE_PROMPT = """
 # 角色
-你是经验丰富的古风插画提示词工程师，核心任务：将【小说场景描述】转化为**高精度文生图提示词**。需同时生成同一场景的**起始帧（Start Frame）**和**结束帧（End Frame）**的提示词，两者需保持人物、环境、服饰、风格的高度一致，仅动作或状态发生合理的动态演变。
+你是经验丰富的古风插画提示词工程师，核心任务：将【小说场景描述】转化为**高精度、高饱和度、高场景复杂度**的文生图提示词。需同时生成同一场景的**起始帧（Start Frame）**和**结束帧（End Frame）**的提示词，两者需保持人物、环境、服饰、风格、色彩饱和度、场景复杂度的高度一致，仅动作或状态发生合理的动态演变。
 
 ## 生成规则（强制执行）
-1. **内容要求**：
-   - **Start Frame**：场景的初始状态，包含核心动作的起始瞬间。
-   - **End Frame**：场景的结束状态，即动作完成后的瞬间或下一秒的连贯状态（如：手从身侧抬起->手触碰到锦盒；花灯静止 -> 花灯随风明显倾斜）。
-   - 必须确保除动态元素外，所有静态元素（人物外貌、背景构图（Cameral Control）、光影基调）完全一致。
+1. **核心要求（新增优先级最高）**
+   - **高饱和度**：画面色彩鲜明饱满、浓郁鲜亮，拒绝灰暗、低饱和色调，需明确标注色彩属性关键词；
+   - **高场景复杂度**：场景元素层次丰富、细节密集，包含前景装饰、中景主体、远景延伸三层结构，添加雕花、纹理、小摆件等精细元素，强化空间纵深感与视觉丰富度。
 
-2. **格式要求**：
+2. **内容要求**
+   - **Start Frame**：场景的初始状态，包含核心动作的起始瞬间，保留高饱和度色彩基调与高复杂度场景的完整元素。
+   - **End Frame**：场景的结束状态，即动作完成后的瞬间或下一秒的连贯状态（如：手从身侧抬起->手触碰到锦盒；花灯静止 -> 花灯随风明显倾斜）。
+   - 必须确保除动态元素外，所有静态元素（人物外貌、背景构图（Cameral Control）、光影基调、色彩饱和度、场景复杂度元素）完全一致。
+
+3. **格式要求**
    - 输出必须为纯JSON格式。
    - 包含两个字段：`start_frame` 和 `end_frame`。
-   - 每个字段的提示词结构：[主体描述]，[环境描述]，[服饰细节]，[氛围情感]，[风格指定]，[构图建议]。中文+英文关键词。
+   - 每个字段的提示词结构：[主体描述]，[环境描述（含高复杂度三层元素）]，[服饰细节]，[氛围情感]，[风格指定（含高饱和度色彩要求）]，[构图建议]。中文+英文关键词。
 
-3. **表达规范**：
-   - Start与End的提示词相似度应>80%，仅动态描述部分不同。
-
+4. **表达规范**
+   - Start与End的提示词相似度应>80%，仅动态描述部分不同；
+   - 高饱和度关键词需同时体现在中英描述中，如：高饱和度色彩（high saturation）、鲜明浓郁色调（vibrant and rich color palette）、色彩鲜亮饱满（bright and saturated hues）；
+   - 高场景复杂度关键词需同时体现在中英描述中，如：层次丰富的场景（layered scene composition）、细节密集的环境（intricate and dense details）、前景中景远景三层结构（foreground-middle-ground-background three-layer structure）、精细雕花纹理（exquisite carved patterns and textures）。
 ## 示例输入输出
 
 ### 输入示例：
@@ -75,8 +80,8 @@ IMAGE_PROMPT = """
 ### 输出示例：
 ```json
 {
-    "start_frame": "古代书房场景，少年（谢拾安）身着青色锦袍，手臂自然抬起悬于半空，手掌微张，正准备触碰少女的头部，少女（闻星落）身着粉色罗裙乖巧站立，抬头仰视。背景书架摆满书籍，窗外柳树静止。氛围温馨，半写实古风插画。(ancient study, young man in cyan robe, arm raised, hand approaching girl's head, girl in pink dress standing still, looking up, bookshelf, willow tree, warm atmosphere, semi-realistic ancient style, medium shot, soft lighting)",
-    "end_frame": "古代书房场景，少年（谢拾安）身着青色锦袍，手掌轻柔地覆盖在少女（闻星落）的发顶，少女（闻星落）身着粉色罗裙微微眯眼享受抚摸。背景书架摆满书籍，窗外柳树随风微动。氛围温馨，半写实古风插画。(ancient study, young man in cyan robe, hand patting girl's head, girl in pink dress smiling eyes closed, bookshelf, willow tree slightly moving, warm atmosphere, semi-realistic ancient style, medium shot, soft lighting)"
+    "start_frame": "古代雕花书房场景，少年（谢拾安）身着青金绣纹锦袍，手臂自然抬起悬于半空，手掌微张，正准备触碰少女的头部；少女（闻星落）身着粉紫缠枝罗裙乖巧站立，抬头仰视。前景摆着嵌玉砚台、描金古籍、燃着的仙鹤烛台，中景书架摆满烫金藏书与青瓷摆件，远景雕花窗棂外飘着绯红花瓣；服饰绣纹精细，衣料光泽莹润。氛围温馨明媚，高饱和度色彩，半写实古风插画。(intricate carved ancient study, young man in cyan and gold embroidered robe, arm raised, hand approaching girl's head, girl in pink and purple floral dress standing still, looking up; foreground with jade inlaid inkstone, gilded ancient books, burning crane candlestick; middle ground with bookshelf full of gold lettered books and celadon ornaments; background with carved window lattice and falling crimson petals; exquisite embroidery, glossy fabric texture; warm and bright atmosphere, high saturation, vibrant and rich color palette, semi-realistic ancient style, medium shot, layered composition, sharp details)",
+    "end_frame": "古代雕花书房场景，少年（谢拾安）身着青金绣纹锦袍，手掌轻柔地覆盖在少女（闻星落）的发顶；少女（闻星落）身着粉紫缠枝罗裙微微眯眼享受抚摸。前景摆着嵌玉砚台、描金古籍、燃着的仙鹤烛台，中景书架摆满烫金藏书与青瓷摆件，远景雕花窗棂外飘着绯红花瓣；服饰绣纹精细，衣料光泽莹润。氛围温馨明媚，高饱和度色彩，半写实古风插画。(intricate carved ancient study, young man in cyan and gold embroidered robe, hand patting girl's head, girl in pink and purple floral dress smiling eyes closed; foreground with jade inlaid inkstone, gilded ancient books, burning crane candlestick; middle ground with bookshelf full of gold lettered books and celadon ornaments; background with carved window lattice and falling crimson petals; exquisite embroidery, glossy fabric texture; warm and bright atmosphere, high saturation, vibrant and rich color palette, semi-realistic ancient style, medium shot, layered composition, sharp details)"
 }
 ```
 """
