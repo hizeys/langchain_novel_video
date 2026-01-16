@@ -7,6 +7,9 @@ from app.utils.logger import setup_logger
 from app.utils.file_ops import image_to_base64, download_image, download_video
 from app.services.llm import generate_image_prompt, generate_video_prompt
 import json
+from app.utils.volc_signature import request
+import requests
+from urllib.parse import urlparse, parse_qs
 
 logger = setup_logger(__name__)
 
@@ -98,27 +101,65 @@ def generate_image(prompt: str, size: str = "1440x2560", save_path: Optional[str
                 logger.error(f"图片生成失败，已达到最大重试次数：{max_retries}")
                 return f"生成图片失败，已达到最大重试次数：{str(e)}"
 
-def poll_video_status(client: Ark, task_id: str, scene_id: str, max_retries: int, poll_interval: int) -> str:
+# def poll_video_status(client: Ark, task_id: str, scene_id: str, max_retries: int, poll_interval: int) -> str:
+#     """轮询查询视频生成结果"""
+#     video_url = None
+#     for i in range(max_retries):
+#         logger.debug(f"场景 {scene_id} 第{i+1}次查询视频生成结果...")
+        
+#         try:
+#             fetch_result = client.content_generation.tasks.get(task_id=task_id)
+#             status = fetch_result.status
+            
+#             if status == 'succeeded':
+#                 video_url = fetch_result.content.video_url
+#                 if video_url:
+#                     logger.info(f"场景 {scene_id} 视频生成成功！视频URL：{video_url}")
+#                     if hasattr(fetch_result, 'usage'):
+#                         logger.info(f"视频生成消耗tokens:{fetch_result.usage.completion_tokens}")
+#                     break
+#             elif status == 'failed' or status == 'cancelled':
+#                 error_msg = fetch_result.error
+#                 logger.error(f"场景 {scene_id} 视频生成失败：{error_msg.message}")
+#                 raise Exception(f"场景 {scene_id} 视频生成失败：{error_msg.message}")
+#             else:
+#                 logger.info(f"场景 {scene_id} 视频生成中，当前状态：{status}")
+#         except Exception as e:
+#             logger.warning(f"场景 {scene_id} 查询视频生成结果失败，将重试：{e}")
+        
+#         if i < max_retries - 1:
+#             time.sleep(poll_interval)
+    
+#     if not video_url:
+#         logger.error(f"场景 {scene_id} 视频生成超时或失败")
+#         raise Exception(f"场景 {scene_id} 视频生成超时或失败")
+    
+#     return video_url
+
+def poll_video_status(task_id: str, scene_id: str, max_retries: int, poll_interval: int) -> str:
     """轮询查询视频生成结果"""
     video_url = None
     for i in range(max_retries):
         logger.debug(f"场景 {scene_id} 第{i+1}次查询视频生成结果...")
         
         try:
-            fetch_result = client.content_generation.tasks.get(task_id=task_id)
-            status = fetch_result.status
-            
-            if status == 'succeeded':
-                video_url = fetch_result.content.video_url
-                if video_url:
-                    logger.info(f"场景 {scene_id} 视频生成成功！视频URL：{video_url}")
-                    if hasattr(fetch_result, 'usage'):
-                        logger.info(f"视频生成消耗tokens:{fetch_result.usage.completion_tokens}")
+            body = {"req_key":"jimeng_i2v_first_tail_v30","task_id":task_id}
+            payload_str = json.dumps(body, separators=(",", ":"))
+            fetch_result = request("POST","CVSync2AsyncGetResult",payload_str)
+            status = fetch_result["data"]["status"]
+            message = fetch_result["message"]
+            if status == 'done':
+                if message == "Success":
+                    video_url = fetch_result["data"]["video_url"]
+                    if video_url:
+                        logger.info(f"场景 {scene_id} 视频生成成功！视频URL：{video_url}")
+                        break
+                else:
+                    logger.error(f"场景{scene_id}视频生成失败,错误信息{message}")
                     break
-            elif status == 'failed' or status == 'cancelled':
-                error_msg = fetch_result.error
-                logger.error(f"场景 {scene_id} 视频生成失败：{error_msg.message}")
-                raise Exception(f"场景 {scene_id} 视频生成失败：{error_msg.message}")
+            elif status == 'not_found' or status == 'expired':
+                logger.error(f"场景 {scene_id} 视频生成失败：{message}")
+                raise Exception(f"场景 {scene_id} 视频生成失败：{message}")
             else:
                 logger.info(f"场景 {scene_id} 视频生成中，当前状态：{status}")
         except Exception as e:
@@ -132,6 +173,8 @@ def poll_video_status(client: Ark, task_id: str, scene_id: str, max_retries: int
         raise Exception(f"场景 {scene_id} 视频生成超时或失败")
     
     return video_url
+
+
 
 def generate_single_video(scene_info: Dict[str, Any], video_dir: str, duration: float = None) -> Dict[str, Any]:
     """生成单个场景的视频"""
@@ -156,43 +199,58 @@ def generate_single_video(scene_info: Dict[str, Any], video_dir: str, duration: 
 
         logger.info(f"场景 {scene_id} 的视频生成提示词：{video_prompt}")
 
-        # Determine duration
-        video_duration = int(duration if duration is not None else Config.VIDEO_DURATION)
+        # 获取音频帧数（141,241）
+        video_frames = int((duration * 24 + 1) if duration is not None else Config.VIDEO_DURATION)
+        if video_frames < 141 or video_frames > 241:
+            logger.error(f"场景 {scene_id} 的音频帧数不在[141,241]范围内")
+            raise Exception(f"场景 {scene_id} 的音频帧数不在[141,241]范围内")
+        logger.info(f"场景{scene_id}生成{video_frames}帧视频")
 
-        client = Ark(
-            api_key=Config.DOUBAO_API_KEY,
-            base_url="https://ark.cn-beijing.volces.com/api/v3"
-        )
-        video_task_result = client.content_generation.tasks.create(
-            model="doubao-seedance-1-0-pro-250528",
-            content=[
-                {
-                    "type":"text",
-                    "text":f"{video_prompt} --duration {video_duration} --resolution {Config.VIDEO_RESOLUTION}",
-                },
-                {
-                    "type":"image_url",
-                    "image_url":{
-                        "url":f"data:image/jpeg;base64,{scene_info['image_base64_start']}"
-                    },
-                    "role":"first_frame"
-                },
-                {
-                    "type":"image_url",
-                    "image_url":{
-                        "url":f"data:image/jpeg;base64,{scene_info['image_base64_end']}"
-                    },
-                    "role":"last_frame"
+        #调用即梦AI生成视频
+        #jimeng_i2v_first_tail_v30:即梦AI-视频生成3.0 720P-图生视频-首尾帧
+        #jimeng_i2v_first_tail_v30_1080:即梦AI-视频生成3.0 1080P-图生视频-首尾帧
+        #jimeng_ti2v_v30_pro:即梦AI-视频生成3.0 Pro
+        body = {"req_key":"jimeng_i2v_first_tail_v30","binary_data_base64":[scene_info["image_base64_start"],scene_info["image_base64_end"]],
+                "prompt":video_prompt,"frames":video_frames
                 }
+        payload_str = json.dumps(body, separators=(",", ":"))
+        video_task_result = request("POST","CVSync2AsyncSubmitTask",payload_str)
+        # client = Ark(
+        #     api_key=Config.DOUBAO_API_KEY,
+        #     base_url="https://ark.cn-beijing.volces.com/api/v3"
+        # )
+        # video_task_result = client.content_generation.tasks.create(
+        #     model="doubao-seedance-1-0-pro-250528",
+        #     content=[
+        #         {
+        #             "type":"text",
+        #             "text":f"{video_prompt} --duration {video_duration} --resolution {Config.VIDEO_RESOLUTION}",
+        #         },
+        #         {
+        #             "type":"image_url",
+        #             "image_url":{
+        #                 "url":f"data:image/jpeg;base64,{scene_info['image_base64_start']}"
+        #             },
+        #             "role":"first_frame"
+        #         },
+        #         {
+        #             "type":"image_url",
+        #             "image_url":{
+        #                 "url":f"data:image/jpeg;base64,{scene_info['image_base64_end']}"
+        #             },
+        #             "role":"last_frame"
+        #         }
 
-            ],
-        )
-        
-        task_id = video_task_result.id
+        #     ],
+        # )
+        if not video_task_result["code"] == 100000:
+            logger.error(f"场景{scene_id}的视频生成任务创建失败")
+            raise Exception(f"场景{scene_id}的视频生成任务创建失败")
+        task_id = video_task_result["data"]["task_id"]
         logger.info(f"场景 {scene_id} 的视频生成任务ID：{task_id}")
         
+        #轮询查询视频生成结果
         video_url = poll_video_status(
-            client=client,
             task_id=task_id,
             scene_id=scene_id,
             max_retries=Config.MAX_VIDEO_RETRIES,
