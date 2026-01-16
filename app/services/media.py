@@ -199,18 +199,18 @@ def generate_single_video(scene_info: Dict[str, Any], video_dir: str, duration: 
 
         logger.info(f"场景 {scene_id} 的视频生成提示词：{video_prompt}")
 
-        # 获取音频帧数（141,241）
-        video_frames = int((duration * 24 + 1) if duration is not None else Config.VIDEO_DURATION)
-        if video_frames < 141 or video_frames > 241:
-            logger.error(f"场景 {scene_id} 的音频帧数不在[141,241]范围内")
-            raise Exception(f"场景 {scene_id} 的音频帧数不在[141,241]范围内")
+        # 获取音频帧数
+        video_frames = int((duration * Config.VIDEO_FRAME_RATE + 1) if duration is not None else Config.VIDEO_DURATION * Config.VIDEO_FRAME_RATE)
+        if video_frames < Config.VIDEO_MIN_FRAMES or video_frames > Config.VIDEO_MAX_FRAMES:
+            logger.error(f"场景 {scene_id} 的音频帧数不在[{Config.VIDEO_MIN_FRAMES},{Config.VIDEO_MAX_FRAMES}]范围内")
+            raise Exception(f"场景 {scene_id} 的音频帧数不在[{Config.VIDEO_MIN_FRAMES},{Config.VIDEO_MAX_FRAMES}]范围内")
         logger.info(f"场景{scene_id}生成{video_frames}帧视频")
 
         #调用即梦AI生成视频
         #jimeng_i2v_first_tail_v30:即梦AI-视频生成3.0 720P-图生视频-首尾帧
         #jimeng_i2v_first_tail_v30_1080:即梦AI-视频生成3.0 1080P-图生视频-首尾帧
         #jimeng_ti2v_v30_pro:即梦AI-视频生成3.0 Pro
-        body = {"req_key":"jimeng_i2v_first_tail_v30","binary_data_base64":[scene_info["image_base64_start"],scene_info["image_base64_end"]],
+        body = {"req_key": Config.JIMENG_MODEL_NAME,"binary_data_base64":[scene_info["image_base64_start"],scene_info["image_base64_end"]],
                 "prompt":video_prompt,"frames":video_frames
                 }
         payload_str = json.dumps(body, separators=(",", ":"))

@@ -49,6 +49,11 @@ langchain_novel_video/
     DASHSCOPE_API_KEY=your_aliyun_api_key
     DOUBAO_API_KEY=your_doubao_api_key
     ```
+    你也可以在 `app/config.py` 中修改以下配置：
+    - `JIMENG_MODEL_NAME`: 即梦AI视频生成模型名称 (默认: `jimeng_i2v_first_tail_v30`)
+    - `VIDEO_FRAME_RATE`: 视频帧率 (默认: `24`)
+    - `VIDEO_MIN_FRAMES`: 视频最小帧数 (默认: `141`)
+    - `VIDEO_MAX_FRAMES`: 视频最大帧数 (默认: `241`)
 
 ## 🚀 使用指南
 

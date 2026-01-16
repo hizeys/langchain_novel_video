@@ -35,3 +35,9 @@ class Config:
     # 视频生成配置
     MAX_VIDEO_RETRIES = 100
     VIDEO_POLL_INTERVAL = 8  # 视频轮询 秒 
+    
+    # Jimeng AI Configuration
+    JIMENG_MODEL_NAME = "jimeng_i2v_first_tail_v30" 
+    VIDEO_FRAME_RATE = 24
+    VIDEO_MIN_FRAMES = 141
+    VIDEO_MAX_FRAMES = 241
