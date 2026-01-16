@@ -1,14 +1,14 @@
 # LangChain Novel Video Generator
 
-这是一个基于 LangChain/LangGraph 架构的自动化小说视频生成 Agent。它能够将纯文本小说章节转化成包含口播配音、角色一致性插画和动态视频的完整作品。
+这是一个基于 LangChain 架构的自动化小说视频生成 Agent。它能够将纯文本小说章节转化成包含口播配音、角色一致性插画和动态视频的完整作品。
 
 ## 🌟 核心特性
 
-- **LangGraph 工作流编排**：采用状态机模式管理复杂的视频生成流程，确保各环节高效衔接。
+- **即梦AI视频生成**：使用即梦AI视频生成模型，生成动态视频片段。
 - **角色一致性 (Character Consistency)**：自动提取小说人物属性，生成固定的角色写真，并在后续场景生成中保持形象一致。
 - **断点续传 (Breakpoint Resume)**：支持任务中断后自动跳过已完成的配音、图片和视频片段，从故障点继续。
 - **智能文案拆解**：自动将小说章节拆分为适合口播的脚本场景，并匹配相应的视觉描述。
-- **多模型支持**：支持通义千问 (Qwen)、豆包 (Doubao) 等多种 LLM 和多媒体生成模型。
+- **多模型支持**：支持 OpenAI SDK LLM 模型。
 - **自动视频合成**：自动对齐音频与视频时长，并完成所有场景片段的无缝拼接。
 
 ## 📂 项目结构
@@ -34,7 +34,7 @@ langchain_novel_video/
 
 1.  **克隆项目**
     ```bash
-    git clone <repository-url>
+    git clone https://github.com/hizeys/langchain_novel_video.git
     cd langchain_novel_video
     ```
 
@@ -46,8 +46,9 @@ langchain_novel_video/
 3.  **配置文件**
     在根目录创建 `.env` 文件，配置相关 API Key：
     ```env
-    DASHSCOPE_API_KEY=your_aliyun_api_key
-    DOUBAO_API_KEY=your_doubao_api_key
+    LLM_API_KEY=your_aliyun_api_key
+    ACCESS_KEY_ID=your_ark_access_key_id
+    ACCESS_KEY_SECRET=your_ark_access_key_secret
     ```
     你也可以在 `app/config.py` 中修改以下配置：
     - `JIMENG_MODEL_NAME`: 即梦AI视频生成模型名称 (默认: `jimeng_i2v_first_tail_v30`)
@@ -88,5 +89,5 @@ python main.py --no-test --max-scenes 10 --chapter "第一章 重生"
 
 ## 📝 注意事项
 
-- 请确保网络环境能够正常访问 DashScope 等 API 服务。
+- 请确保网络环境能够正常访问 Ark API 服务。
 - 视频生成耗时较长，建议先开启 `--test` 模式验证效果。

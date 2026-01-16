@@ -4,15 +4,11 @@ import dotenv
 dotenv.load_dotenv()
 
 class Config:
-    # API配置
-    DASHSCOPE_API_KEY = os.getenv("DASHSCOPE_API_KEY")
-    DASHSCOPE_BASE_URL = os.getenv("DASHSCOPE_BASE_URL")
-    DOUBAO_API_KEY = os.getenv("DOUBAO_API_KEY")
-    
     # 模型配置
-    LLM_MODEL = "qwen3-max" # Updated from tools.py preference or main.py? tools.py uses qwen3-max
+    LLM_MODEL = "qwen3-max"
     LLM_MODEL_PROVIDER = "openai"
     LLM_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+    LLM_API_KEY = os.getenv("LLM_API_KEY")
     
     # 多媒体模型配置
     VIDEO_DURATION = 5  # 视频时长 秒 -1:根据场景内容自动调整(仅1.5pro)
